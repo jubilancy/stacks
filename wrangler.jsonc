@@ -43,8 +43,9 @@
     // "true" lets anyone read the catalog. Writes always need ADMIN_TOKEN.
     "PUBLIC_READ": "false",
     // Hosts the in-app reader may fetch through this Worker (comma-separated, subdomains included).
-    // Leave empty to disable the proxy. Example: "archive.org,gutenberg.org"
-    "PROXY_HOSTS": "",
+    // Leave empty to disable the proxy. To add more, list them in this one value,
+    // e.g. "archive.org,gutenberg.org"
+    "PROXY_HOSTS": "archive.org",
     "CORS_PROXY": "https://proxy.glosse.me",
     // Links re-checked per cron run. Free plan allows 50 subrequests per run, so keep this at 12 or less.
     "LINK_CHECK_BATCH": "12"
