@@ -301,6 +301,7 @@ function buildMenu() {
   if (state.admin) {
     item("Match missing covers", matchCovers);
     item("Check links on this page", checkPage);
+    item("Find archived copies for this page", archiveAll);
   }
   item("Export as JSON", () => download("json"));
   item("Export as CSV", () => download("csv"));
@@ -422,7 +423,7 @@ function renderBookSide(book) {
   if (book.archive_url) acts.append(h("a", { class: "btn", href: book.archive_url, target: "_blank", rel: "noopener noreferrer", text: "Open archived copy" }));
   if (state.admin) {
     acts.append(h("button", { class: "btn", type: "button", onclick: checkOne, text: "Check link now" }));
-    if (book.link_status === "dead" && !book.archive_url) acts.append(h("button", { class: "btn", type: "button", onclick: findArchive, text: "Find an archived copy" }));
+    acts.append(h("button", { class: "btn", type: "button", onclick: () => findArchive(true), text: book.archive_url ? "Save a fresh snapshot" : "Archive this link" }));
   }
 
   const label = { ok: "Link works", dead: "Link is broken", unknown: "Not checked yet" }[book.link_status];
@@ -451,15 +452,31 @@ async function checkOne() {
   } catch (e) { toast(e.message); }
 }
 
-async function findArchive() {
+async function findArchive(save) {
   const b = state.editing;
   try {
-    toast("Looking in the Wayback Machine…");
-    const r = await api(`/api/books/${b.id}/archive`, { method: "POST" });
-    if (!r.archive_url) { toast("No archived copy was found."); return; }
+    toast(save ? "Asking the Wayback Machine to save this page. This can take up to a minute…" : "Looking in the Wayback Machine…");
+    const r = await api(`/api/books/${b.id}/archive${save ? "?save=1" : ""}`, { method: "POST" });
+    if (!r.archive_url) { toast("The Wayback Machine couldn't save or find a copy."); return; }
     replaceInState(r.book);
     renderBookSide(r.book);
+    toast("Archived copy linked.");
   } catch (e) { toast(e.message); }
+}
+
+async function archiveAll() {
+  const targets = state.items.filter((b) => !b.archive_url).slice(0, 40);
+  if (!targets.length) { toast("Every book on this page already has an archived copy."); return; }
+  let found = 0;
+  for (let i = 0; i < targets.length; i++) {
+    toast(`Looking for archived copies… ${i + 1} of ${targets.length}`);
+    try {
+      const r = await api(`/api/books/${targets[i].id}/archive`, { method: "POST" });
+      if (r.archive_url) found++;
+    } catch { /* skip */ }
+  }
+  toast(`Linked ${found} archived ${found === 1 ? "copy" : "copies"}. The rest have no snapshot yet; open a book and use “Archive this link”.`);
+  load();
 }
 
 function formBody() {

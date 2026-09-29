@@ -457,6 +457,14 @@ async function createBook(env: Env, raw: Record<string, unknown>): Promise<Respo
       .bind(...BOOK_FIELDS.map((f) => parsed[f] ?? null))
       .first<BookRow>();
     if (!row) throw new HttpError(500, 'The book could not be saved.');
+    // Note an existing Wayback Machine snapshot right away (one quick lookup; skipped for local testing).
+    if (!allowPrivateHosts(env)) {
+      const archive = await findArchive(row.url);
+      if (archive) {
+        await env.DB.prepare('UPDATE books SET archive_url = ? WHERE id = ?').bind(archive, row.id).run();
+        row.archive_url = archive;
+      }
+    }
     return json(toApi(row), 201);
   } catch (e) {
     if (isUniqueError(e)) {
@@ -705,6 +713,21 @@ async function findArchive(target: string): Promise<string> {
   }
 }
 
+/** Ask the Wayback Machine to take a new snapshot ("Save Page Now"), then return its address or ''. */
+async function saveSnapshot(target: string): Promise<string> {
+  try {
+    const res = await fetch(`https://web.archive.org/save/${target}`, {
+      headers: { 'user-agent': UA },
+      redirect: 'follow',
+      signal: AbortSignal.timeout(45000),
+    });
+    if (res.status >= 400) return '';
+    return (await findArchive(target)) || (res.url.includes('/web/') ? res.url.replace(/^http:\/\//, 'https://') : '');
+  } catch {
+    return '';
+  }
+}
+
 /** Probe one book's link and save the result. Three failures in a row mark it dead. */
 async function checkBook(env: Env, book: BookRow, origin: string | null): Promise<BookRow> {
   const r = await probeUrl(book.url, origin);
@@ -872,7 +895,8 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
       const row = await env.DB.prepare('SELECT * FROM books WHERE id = ?').bind(id).first<BookRow>();
       if (!row) throw new HttpError(404, 'Book not found.');
       if (action === 'check') return json(toApi(await checkBook(env, row, url.origin)));
-      const archive = await findArchive(row.url);
+      let archive = await findArchive(row.url);
+      if (!archive && p.get('save') === '1') archive = await saveSnapshot(row.url);
       if (!archive) return json({ archive_url: '', book: toApi(row) });
       const updated = await env.DB.prepare("UPDATE books SET archive_url = ?, updated_at = datetime('now') WHERE id = ? RETURNING *")
         .bind(archive, id)
