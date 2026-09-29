@@ -1,0 +1,4 @@
+# Copy to .dev.vars for local development (npx wrangler dev reads it). Never commit .dev.vars.
+ADMIN_TOKEN=dev-token-change-me
+# Local testing only: lets the app add and probe http://localhost URLs. Do not set this in production.
+ALLOW_PRIVATE_HOSTS=true

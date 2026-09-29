@@ -1,0 +1,20 @@
+{
+  "name": "stacks",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "URL-first personal library: a Calibre-style catalog on Cloudflare Workers + D1 that links to books instead of hosting them.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "db:local": "wrangler d1 migrations apply stacks --local",
+    "db:remote": "wrangler d1 migrations apply stacks --remote",
+    "test:smoke": "bash test/smoke.sh"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260926.1",
+    "typescript": "^5.7.0",
+    "wrangler": "^4.0.0"
+  }
+}

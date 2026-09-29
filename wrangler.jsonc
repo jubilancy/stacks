@@ -1,0 +1,52 @@
+// wrangler.jsonc: configuration for the Stacks Worker
+{
+  "name": "stacks",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-03-07",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Logs for every request (view them in the dashboard under Workers > stacks > Logs)
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+
+  // The frontend (public/) is served as static assets. Requests that don't match a file
+  // (like /api/*) fall through to the Worker.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+
+  // D1 holds the catalog. Run `npx wrangler d1 create stacks`, then paste the printed
+  // database_id below. (Local development ignores the id.)
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "stacks",
+      "database_id": "83aa825f-722b-4af1-bb49-87f95c310f16",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  // Serves the app at stacks.glosse.me (the glosse.me zone must be on your Cloudflare account).
+  "routes": [{ "pattern": "stacks.glosse.me", "custom_domain": true }],
+
+  // Link checker: every 6 hours, re-checks the oldest-checked links.
+  "triggers": {
+    "crons": ["0 */6 * * *"]
+  },
+
+  // Plain-text settings. Secrets (ADMIN_TOKEN) are NOT stored here:
+  //   npx wrangler secret put ADMIN_TOKEN
+  "vars": {
+    // "true" lets anyone read the catalog. Writes always need ADMIN_TOKEN.
+    "PUBLIC_READ": "false",
+    // Hosts the in-app reader may fetch through this Worker (comma-separated, subdomains included).
+    // Leave empty to disable the proxy. Example: "archive.org,gutenberg.org"
+    "PROXY_HOSTS": "",
+    "CORS_PROXY": "https://proxy.glosse.me",
+    // Links re-checked per cron run. Free plan allows 50 subrequests per run, so keep this at 12 or less.
+    "LINK_CHECK_BATCH": "12"
+  }
+}

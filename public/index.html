@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stacks</title>
+  <meta name="description" content="A personal library that links to your books instead of hosting them.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231d1833'/%3E%3Crect x='5' y='7' width='6' height='20' fill='%237d2233'/%3E%3Crect x='13' y='4' width='7' height='23' fill='%23c8973a'/%3E%3Crect x='22' y='9' width='5' height='18' fill='%232f7069'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=Gloock&display=swap">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="top">
+    <h1 class="brand">Stacks</h1>
+    <form id="search-form" role="search" class="search">
+      <label class="sr-only" for="q">Search your library</label>
+      <input id="q" type="search" autocomplete="off" placeholder="Search titles, authors, tags and notes  (press / to jump here)">
+    </form>
+    <nav class="actions" aria-label="Library actions">
+      <button id="btn-add" class="btn btn-primary" type="button" hidden>Add book</button>
+      <button id="btn-import" class="btn" type="button" hidden>Import</button>
+      <div class="menu-wrap">
+        <button id="btn-menu" class="btn" type="button" aria-haspopup="true" aria-expanded="false" hidden>More</button>
+        <div id="menu" class="menu" role="menu" hidden></div>
+      </div>
+      <button id="btn-signin" class="btn" type="button" hidden>Sign in</button>
+    </nav>
+  </header>
+
+  <div class="app">
+    <details class="filters" id="filters" open>
+      <summary>Filters</summary>
+      <div id="index"></div>
+    </details>
+
+    <main>
+      <div class="toolbar">
+        <p id="summary" class="summary" aria-live="polite"></p>
+        <div class="tools">
+          <div class="views" role="group" aria-label="View">
+            <button type="button" class="view-btn" data-view="shelf" aria-pressed="true">Shelf</button>
+            <button type="button" class="view-btn" data-view="covers" aria-pressed="false">Covers</button>
+            <button type="button" class="view-btn" data-view="list" aria-pressed="false">List</button>
+          </div>
+          <label class="sort">
+            <span class="sr-only">Sort by</span>
+            <select id="sort">
+              <option value="">Recently added</option>
+              <option value="title">Title</option>
+              <option value="author">Author</option>
+              <option value="year">Year</option>
+              <option value="rating">Rating</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <div id="content"></div>
+      <div class="more-wrap"><button id="more" class="btn" type="button" hidden>Show more</button></div>
+    </main>
+  </div>
+
+  <!-- Book: add, view and edit -->
+  <dialog id="dlg-book" aria-labelledby="book-heading">
+    <form id="book-form" novalidate>
+      <div class="titlebar">
+        <h2 id="book-heading">Add book</h2>
+        <button type="button" class="x" data-close aria-label="Close">×</button>
+      </div>
+      <div class="dlg-body">
+        <div class="book-cols">
+          <div class="book-side">
+            <div id="book-cover" class="cover-box"></div>
+            <div id="book-actions" class="side-actions"></div>
+            <div id="link-info" class="link-info"></div>
+          </div>
+          <fieldset id="book-fields" class="book-fields">
+            <legend class="sr-only">Book details</legend>
+            <label>Web address
+              <input name="url" type="url" required placeholder="https://example.org/files/book.pdf" autocomplete="off">
+            </label>
+            <div class="row">
+              <button type="button" class="btn small" id="btn-probe">Check address</button>
+              <span id="probe-result" class="hint" aria-live="polite"></span>
+            </div>
+            <label>Title <input name="title" placeholder="Leave blank to use the file name"></label>
+            <label>Author <input name="author"></label>
+            <div class="two">
+              <label>Series <input name="series"></label>
+              <label>Number in series <input name="series_index" type="number" step="0.1" min="0"></label>
+            </div>
+            <div class="two">
+              <label>Format <select name="format"></select></label>
+              <label>Year <input name="year" type="number" min="0" max="3000"></label>
+            </div>
+            <div class="two">
+              <label>ISBN <input name="isbn"></label>
+              <label>Language <input name="language"></label>
+            </div>
+            <label>Publisher <input name="publisher"></label>
+            <label>Cover image address <input name="cover_url" type="url" placeholder="https://"></label>
+            <label>Tags, separated by commas <input name="tags" placeholder="occult, medieval, egypt"></label>
+            <label>Description <textarea name="description" rows="3"></textarea></label>
+            <label>Your notes <textarea name="notes" rows="3"></textarea></label>
+            <div class="two">
+              <label>Reading status
+                <select name="status">
+                  <option value="unread">Unread</option>
+                  <option value="reading">Reading</option>
+                  <option value="read">Read</option>
+                </select>
+              </label>
+              <label>Rating
+                <select name="rating">
+                  <option value="0">Not rated</option>
+                  <option value="1">1 star</option>
+                  <option value="2">2 stars</option>
+                  <option value="3">3 stars</option>
+                  <option value="4">4 stars</option>
+                  <option value="5">5 stars</option>
+                </select>
+              </label>
+            </div>
+            <label class="check"><input type="checkbox" name="favorite"> Favorite</label>
+
+            <details id="lookup" class="lookup">
+              <summary>Find details on Open Library</summary>
+              <div class="row">
+                <input id="lookup-q" placeholder="Title, author or ISBN" aria-label="Search Open Library">
+                <button type="button" class="btn small" id="btn-lookup">Search</button>
+              </div>
+              <p id="lookup-msg" class="hint" aria-live="polite"></p>
+              <ul id="lookup-results" class="candidates"></ul>
+            </details>
+          </fieldset>
+        </div>
+        <p id="book-error" class="form-error" role="alert" hidden></p>
+        <div class="dlg-foot">
+          <button type="button" class="btn btn-danger" id="btn-delete" hidden>Delete book</button>
+          <span class="spacer"></span>
+          <button type="button" class="btn" data-close>Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-save">Add to library</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Import many books -->
+  <dialog id="dlg-import" aria-labelledby="import-heading">
+    <form id="import-form" novalidate>
+      <div class="titlebar">
+        <h2 id="import-heading">Import books</h2>
+        <button type="button" class="x" data-close aria-label="Close">×</button>
+      </div>
+      <div class="dlg-body">
+        <label>Paste web addresses, one per line
+          <textarea id="import-urls" rows="8" placeholder="https://example.org/first.pdf&#10;Optional title | https://example.org/second.epub"></textarea>
+        </label>
+        <label>Or choose a file (CSV, or JSON exported from Stacks)
+          <input id="import-file" type="file" accept=".csv,.json,text/csv,application/json">
+        </label>
+        <label>Tags for every imported book <input id="import-tags" placeholder="optional, comma separated"></label>
+        <p class="hint">Titles are guessed from file names. Use “Match missing covers” in the More menu afterwards to fill in authors and covers.</p>
+        <progress id="import-progress" max="1" value="0" hidden></progress>
+        <p id="import-result" class="hint" aria-live="polite"></p>
+        <div class="dlg-foot">
+          <span class="spacer"></span>
+          <button type="button" class="btn" data-close>Close</button>
+          <button type="submit" class="btn btn-primary" id="btn-run-import">Import</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Sign in -->
+  <dialog id="dlg-login" aria-labelledby="login-heading">
+    <form id="login-form" novalidate>
+      <div class="titlebar">
+        <h2 id="login-heading">Sign in</h2>
+        <button type="button" class="x" data-close aria-label="Close">×</button>
+      </div>
+      <div class="dlg-body">
+        <label>Access token
+          <input id="login-token" type="password" autocomplete="current-password" required>
+        </label>
+        <p class="hint">This is the ADMIN_TOKEN you set on the Worker. It stays in this browser.</p>
+        <p id="login-error" class="form-error" role="alert" hidden></p>
+        <div class="dlg-foot">
+          <span class="spacer"></span>
+          <button type="button" class="btn" data-close>Cancel</button>
+          <button type="submit" class="btn btn-primary">Sign in</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

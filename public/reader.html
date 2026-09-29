@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reader · Stacks</title>
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=Gloock&display=swap">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body { display: grid; grid-template-rows: auto auto 1fr; height: 100vh; height: 100dvh; }
+    .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 16px; background: var(--ink); color: var(--paper); }
+    .bar h1 { font-size: 1.15rem; flex: 1 1 200px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bar a { color: var(--paper); }
+    .bar .btn { background: var(--paper); color: var(--ink); box-shadow: none; border-color: var(--paper); }
+    .bar input, .bar select { color: #1d1833; background: #fff; }
+    .bar input { width: 4.5rem; text-align: center; }
+    .bar .group { display: flex; gap: 6px; align-items: center; }
+    .notice { margin: 0; padding: 10px 16px; background: var(--panel); border-bottom: 2px solid var(--ink); }
+    .stage { overflow: auto; padding: 16px; background: var(--panel-2); }
+    #pdf-pages { display: grid; gap: 14px; justify-items: center; }
+    #pdf-pages canvas { max-width: none; background: #fff; box-shadow: var(--shadow); border: 2px solid var(--ink); }
+    #epub-view { height: 100%; background: #fff; color: #111; border: 2px solid var(--ink); box-shadow: var(--shadow); }
+    #epub-stage { padding: 12px; overflow: hidden; }
+    #status { font-weight: 600; }
+  </style>
+</head>
+<body>
+  <header class="bar">
+    <a href="/">Library</a>
+    <h1 id="title">Loading…</h1>
+    <div class="group" id="pdf-tools" hidden>
+      <button class="btn small" id="prev" type="button">Previous</button>
+      <label class="sr-only" for="page">Page</label>
+      <input id="page" type="number" min="1" value="1">
+      <span id="pages"></span>
+      <button class="btn small" id="next" type="button">Next</button>
+      <button class="btn small" id="zoom-out" type="button" aria-label="Zoom out">−</button>
+      <button class="btn small" id="zoom-in" type="button" aria-label="Zoom in">+</button>
+      <button class="btn small" id="fit" type="button">Fit width</button>
+    </div>
+    <div class="group" id="epub-tools" hidden>
+      <button class="btn small" id="e-prev" type="button">Previous</button>
+      <button class="btn small" id="e-next" type="button">Next</button>
+      <label class="sr-only" for="toc">Chapters</label>
+      <select id="toc" style="width:auto;max-width:14rem"></select>
+      <button class="btn small" id="f-down" type="button" aria-label="Smaller text">A−</button>
+      <button class="btn small" id="f-up" type="button" aria-label="Larger text">A+</button>
+    </div>
+  </header>
+  <p id="notice" class="notice" hidden></p>
+  <div id="pdf-stage" class="stage" hidden><div id="pdf-pages"></div></div>
+  <div id="epub-stage" class="stage" hidden><div id="epub-view"></div></div>
+  <p id="status" class="notice" role="status">Loading the book…</p>
+  <script type="module" src="/reader.js"></script>
+</body>
+</html>
